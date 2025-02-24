@@ -25,11 +25,20 @@ const fetchPlayerId = async (gameName: string, tagLine: string) => {
   }
 };
 
-const fetchMatches = async (playerId: string) => {
+const fetchMatches = async (
+  playerId: string,
+  options: { [key: string]: string | number } = {}
+) => {
   try {
-    // First get match IDs for the player using their PUUID
+    const params = Object.entries(options).map(([key, value]) => [key, String(value)]);
+
+    const queryParams = params
+      ? '?' +
+        new URLSearchParams(params).toString()
+      : '';
+
     const matchIdsResponse = await fetch(
-      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${playerId}/ids`,
+      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${playerId}/ids${queryParams}`,
       {
         method: 'GET',
         headers: {
@@ -55,34 +64,37 @@ const fetchMatches = async (playerId: string) => {
   }
 };
 
-const fetchMatchDetails = async (matchIds: string[]) => {
-  const matchDetailsPromises = matchIds.map(
-    async (matchId: string): Promise<MatchData> => {
-      const matchResponse = await fetch(
-        `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`,
-        {
-          headers: {
-            'X-Riot-Token': apiKey,
-          },
-        }
-      );
-
-      if (!matchResponse.ok) {
-        const response = await matchResponse.json();
-        console.error(response);
-        throw new Error(
-          `Failed to fetch match details: ${response.status.message}`
-        );
-      }
-
-      const matchData: MatchData = await matchResponse.json();
-
-      return matchData;
+const fetchMatchDetail = async (matchId: string) => {
+  const matchResponse = await fetch(
+    `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+    {
+      headers: {
+        'X-Riot-Token': apiKey,
+      },
     }
   );
 
-  const matchDetails = await Promise.all(matchDetailsPromises);
+  if (!matchResponse.ok) {
+    const response = await matchResponse.json();
+    console.error(response);
+    throw new Error(
+      `Failed to fetch match details: ${response.status.message}`
+    );
+  }
 
+  const matchData: MatchData = await matchResponse.json();
+
+  return matchData;
+};
+
+const fetchMatchDetails = async (matchIds: string[]) => {
+  const matchDetailsPromises = matchIds.map(
+    async (matchId: string): Promise<MatchData> => {
+      const matchData = await fetchMatchDetail(matchId);
+      return matchData;
+    }
+  );
+  const matchDetails = await Promise.all(matchDetailsPromises);
   return matchDetails;
 };
 
@@ -90,7 +102,7 @@ const getRecentMatches = async (req: Request, res: Response) => {
   try {
     const playerId = await fetchPlayerId(req.body.gameName, req.body.tagLine);
 
-    const matchIds  = await fetchMatches(playerId);
+    const matchIds = await fetchMatches(playerId);
 
     const matchDetails = await fetchMatchDetails(matchIds);
 
@@ -98,8 +110,16 @@ const getRecentMatches = async (req: Request, res: Response) => {
       matches: matchDetails,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch matches', message: err.message });
+    res
+      .status(500)
+      .json({ error: 'Failed to fetch matches', message: err.message });
   }
 };
 
-export { getRecentMatches };
+export {
+  getRecentMatches,
+  fetchPlayerId,
+  fetchMatches,
+  fetchMatchDetails,
+  fetchMatchDetail,
+};
