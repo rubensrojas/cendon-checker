@@ -5,10 +5,21 @@ import GameRow from '../components/GameRow';
 import useMatches from '@/hooks/useMatches';
 
 export default function HomePage() {
-  const { isLoading, filteredMatches: games, winRate } = useMatches();
+  const { isLoading, filteredMatches: games, error, winRate } = useMatches();
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-lg w-full mx-4">
+          <p className="text-red-500 text-xl font-bold text-center">Error</p>
+          <p className="text-gray-400 text-center mt-2">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
