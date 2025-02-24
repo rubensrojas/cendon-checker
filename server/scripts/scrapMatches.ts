@@ -37,7 +37,9 @@ const scrapMatches = async (
           break;
         }
 
-        console.log(`Fetching match ${matchId} - ${currentMatchCount} of ${totalCount}`);
+        console.log(
+          `Fetching match ${matchId} - ${currentMatchCount + 1} of ${totalCount}`
+        );
 
         const matchDetail = await fetchMatchDetail(matchId);
 
@@ -53,6 +55,7 @@ const scrapMatches = async (
     } finally {
       const player = getPlayerData(name, tag);
       populateMatches(matches, player);
+      saveDataIntoJson(matches, name, tag);
     }
   }
 
@@ -61,24 +64,39 @@ const scrapMatches = async (
 
 const populateMatches = (matches: MatchData[], player: Player) => {
   const checkMatch = db.prepare(
-    'SELECT match_id FROM Matches WHERE match_id = ?'
+    'SELECT match_id FROM matches WHERE match_id = ?'
   );
 
   const insert = db.prepare(
-    'INSERT INTO Matches (match_id, data) VALUES (?, ?)'
+    'INSERT INTO matches (match_id, data, game_start_timestamp) VALUES (?, ?, ?)'
   );
   const insertMatchPlayers = db.prepare(
-    'INSERT INTO MatchPlayers (match_id, player_id) VALUES (?, ?)'
+    'INSERT INTO match_players (match_id, game_start_timestamp, player_id, champion) VALUES (?, ?, ?, ?)'
   );
 
   let newMatchCount = 0;
 
   for (const match of matches) {
     const existingMatch = checkMatch.get(match.metadata.matchId);
-    console.log(`Existing match: ${existingMatch}`);
     if (!existingMatch) {
-      insert.run(match.metadata.matchId, JSON.stringify(match.info));
-      insertMatchPlayers.run(match.metadata.matchId, player.id);
+      const participantInfo = match.info.participants.find(
+        (participant) =>
+          participant.riotIdGameName === player.name &&
+          participant.riotIdTagline === player.tag
+      );
+
+      const championName = participantInfo.championName;
+      insert.run(
+        match.metadata.matchId,
+        JSON.stringify(match.info),
+        match.info.gameStartTimestamp
+      );
+      insertMatchPlayers.run(
+        match.metadata.matchId,
+        match.info.gameStartTimestamp,
+        player.id,
+        championName
+      );
       newMatchCount++;
     }
   }
@@ -90,7 +108,7 @@ const populateMatches = (matches: MatchData[], player: Player) => {
 
 const getPlayerData = (name: string, tag: string): Player => {
   const player = db
-    .prepare('SELECT * FROM Players WHERE name = ? AND tag = ?')
+    .prepare('SELECT * FROM players WHERE name = ? AND tag = ?')
     .get(name, tag);
 
   if (!player) {
@@ -106,7 +124,11 @@ const saveDataIntoJson = (matches: any, name: string, tag: string) => {
   const path = require('path');
 
   const outputDir = path.join(__dirname, '..', 'data');
-  const outputFile = path.join(outputDir, `matches_${name}_${tag}.json`);
+  const timestamp = new Date().getTime();
+  const outputFile = path.join(
+    outputDir,
+    `matches_${name}_${tag}_${timestamp}.json`
+  );
 
   // Create data directory if it doesn't exist
   if (!fs.existsSync(outputDir)) {

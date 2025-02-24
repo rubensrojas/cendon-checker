@@ -113,13 +113,14 @@ const getPlayerId = async (name: string, tag: string) => {
 
   return player.id;
 };
+
 const getLastedMatches = async (
   playerId: number,
   count: number = 20,
   start: number = 0
 ) => {
   const playerMatches = db
-    .prepare('SELECT * FROM MatchPlayers where player_id = ? LIMIT ? OFFSET ?')
+    .prepare('SELECT * FROM match_players where player_id = ? LIMIT ? OFFSET ?')
     .all(playerId, count, start) as MatchPlayer[];
 
   const matchesDetails: { matchId: string; data: MatchInfo }[] = [];
@@ -175,4 +176,5 @@ export {
   fetchMatches,
   fetchMatchDetails,
   fetchMatchDetail,
+  getPlayerId
 };
