@@ -5,7 +5,7 @@ import { Orbitron } from 'next/font/google'
 const orbitron = Orbitron({
   subsets: ['latin'],
   display: 'swap',
-  weight: '400',
+  weight: ['400', '700'],
 })
 
 import './globals.css';

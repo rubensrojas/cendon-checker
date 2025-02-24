@@ -14,7 +14,6 @@ const useRiotDataHook = () => {
   >([]);
   const [filteredMatches, setFilteredMatches] = useState<FormattedMatch[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [winRate, setWinRate] = useState<number>(0);
 
   const fetchMatches = async () => {
     try {
@@ -83,12 +82,6 @@ const useRiotDataHook = () => {
     setFilteredMatches(formattedMatches.filter((match) => match !== null));
   };
 
-  const calculateWinRate = (matches: FormattedMatch[]) => {
-    const wins = matches.filter((match) => match.win).length;
-    const losses = matches.filter((match) => !match.win).length;
-    return (wins / (wins + losses)) * 100;
-  };
-
   useEffect(() => {
     fetchMatches();
   }, []);
@@ -97,11 +90,7 @@ const useRiotDataHook = () => {
     filterMatches(matches);
   }, [matches]);
 
-  useEffect(() => {
-    setWinRate(calculateWinRate(filteredMatches));
-  }, [filteredMatches]);
-
-  return { isLoading, filteredMatches, error, winRate };
+  return { isLoading, filteredMatches, error };
 };
 
 export default useRiotDataHook;

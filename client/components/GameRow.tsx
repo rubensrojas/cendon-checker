@@ -29,7 +29,7 @@ export default function GameRow({
         (win ? 'border-victory-blue/50' : 'border-defeat-red/50')
       }
     >
-      <div className="flex flex-row items-center gap-4">
+      <div className="flex flex-row items-center gap-6">
         <div className="flex flex-col items-center gap-1">
           <div className="w-[100px] h-[100px] bg-gray-800 rounded-md">
             <Image
@@ -42,12 +42,14 @@ export default function GameRow({
           </div>
           <p className="text-sm font-bold">{champion}</p>
         </div>
-        <p className="text-2xl font-bold tracking-widest">
-          {kills}/
-          <span className="text-death-red">
-            {deaths}
-          </span>/{assists}
-        </p>
+        <div className="flex flex-col items-center">
+          <p className="text-lg font-bold tracking-widest">
+            K/D/A
+          </p>
+          <p className="text-xl font-bold tracking-widest">
+            {kills}/<span className="text-death-red">{deaths}</span>/{assists}
+          </p>
+        </div>
       </div>
       <div className="flex flex-col items-center">
         <p
@@ -58,9 +60,7 @@ export default function GameRow({
         >
           {win ? 'Victory' : 'Defeat'}
         </p>
-        <p className="text-sm font-bold">
-          {formattedGameLength}
-        </p>
+        <p className="text-sm font-bold">{formattedGameLength}</p>
         <p className="text-xs">
           {new Date(date).toLocaleDateString('pt-BR', {
             day: '2-digit',
