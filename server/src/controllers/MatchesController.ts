@@ -1,11 +1,13 @@
 require('dotenv').config();
 
-import { MatchData } from '../../interfaces/matches';
+import { db } from '../../db/connection';
+import { Match, MatchPlayer, Player } from '../../interfaces/db';
+import { MatchData, MatchInfo } from '../../interfaces/matches';
 import { Request, Response } from 'express';
 
 const apiKey = process.env.RIOT_API_KEY;
 
-const fetchPlayerId = async (gameName: string, tagLine: string) => {
+const fetchPlayerPUUID = async (gameName: string, tagLine: string) => {
   try {
     const response = await fetch(
       `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`,
@@ -30,11 +32,13 @@ const fetchMatches = async (
   options: { [key: string]: string | number } = {}
 ) => {
   try {
-    const params = Object.entries(options).map(([key, value]) => [key, String(value)]);
+    const params = Object.entries(options).map(([key, value]) => [
+      key,
+      String(value),
+    ]);
 
     const queryParams = params
-      ? '?' +
-        new URLSearchParams(params).toString()
+      ? '?' + new URLSearchParams(params).toString()
       : '';
 
     const matchIdsResponse = await fetch(
@@ -98,16 +102,65 @@ const fetchMatchDetails = async (matchIds: string[]) => {
   return matchDetails;
 };
 
-const getRecentMatches = async (req: Request, res: Response) => {
+const getPlayerId = async (name: string, tag: string) => {
+  const player = db
+    .prepare('SELECT * FROM players WHERE name = ? AND tag = ?')
+    .get(name, tag) as Player;
+
+  if (!player) {
+    throw new Error('Player not found');
+  }
+
+  return player.id;
+};
+const getLastedMatches = async (
+  playerId: number,
+  count: number = 20,
+  start: number = 0
+) => {
+  const playerMatches = db
+    .prepare('SELECT * FROM MatchPlayers where player_id = ? LIMIT ? OFFSET ?')
+    .all(playerId, count, start) as MatchPlayer[];
+
+  const matchesDetails: { matchId: string; data: MatchInfo }[] = [];
+
+  for (const playerMatch of playerMatches) {
+    const matchId = playerMatch.match_id;
+    const match = db
+      .prepare('SELECT * FROM matches WHERE match_id = ?')
+      .get(matchId) as Match;
+
+    const matchInfo = { matchId: match.match_id, data: JSON.parse(match.data) };
+    matchesDetails.push(matchInfo);
+  }
+
+  return matchesDetails;
+};
+
+const getRecentMatches = async (
+  req: Request & {
+    body: { name?: string; tag?: string; count?: number; start?: number };
+  },
+  res: Response
+) => {
+  const name = req?.body?.name;
+  const tag = req?.body?.tag;
+  const count = isNaN(Number(req?.body?.count)) ? 20 : Number(req?.body?.count);
+  const start = isNaN(Number(req?.body?.start)) ? 0 : Number(req?.body?.start);
+
+  if (!name || !tag) {
+    res.status(400).json({ error: 'Name and Tag are required' });
+    return;
+  }
+
   try {
-    const playerId = await fetchPlayerId(req.body.gameName, req.body.tagLine);
+    const playerId = await getPlayerId(name, tag);
 
-    const matchIds = await fetchMatches(playerId);
-
-    const matchDetails = await fetchMatchDetails(matchIds);
+    const matches = await getLastedMatches(playerId, count, start);
 
     res.json({
-      matches: matchDetails,
+      matches: matches,
+      message: 'Success',
     });
   } catch (err) {
     res
@@ -118,7 +171,7 @@ const getRecentMatches = async (req: Request, res: Response) => {
 
 export {
   getRecentMatches,
-  fetchPlayerId,
+  fetchPlayerPUUID,
   fetchMatches,
   fetchMatchDetails,
   fetchMatchDetail,

@@ -2,7 +2,7 @@ import { argv, exit } from 'process';
 import {
   fetchMatchDetail,
   fetchMatches,
-  fetchPlayerId,
+  fetchPlayerPUUID,
 } from '../src/controllers/MatchesController';
 import { MatchData } from '../interfaces/matches';
 import { db } from '../db/connection';
@@ -16,7 +16,7 @@ const scrapMatches = async (
 ) => {
   let currentMatchCount = 0;
 
-  const playerPUUId = await fetchPlayerId(name, tag);
+  const playerPUUId = await fetchPlayerPUUID(name, tag);
   const cycles = Math.floor(totalCount / 100) + (totalCount % 100 > 0 ? 1 : 0);
 
   for (let i = 0; i < cycles; i++) {
