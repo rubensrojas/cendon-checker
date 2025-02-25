@@ -8,7 +8,14 @@ import useStatistics from '@/hooks/useStatistics';
 
 export default function HomePage() {
   const { isLoading, filteredMatches: games, error } = useMatches();
-  const { isLoading: isLoadingStatistics, winRate, last24Hours, lastWeek, lastMonth, mostPlayedChampion } = useStatistics(games);
+  const {
+    isLoading: isLoadingStatistics,
+    winRate,
+    last24Hours,
+    lastWeek,
+    lastMonth,
+    mostPlayedChampion,
+  } = useStatistics();
 
   if (isLoading) {
     return <Loading />;

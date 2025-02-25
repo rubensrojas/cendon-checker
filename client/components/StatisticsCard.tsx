@@ -30,6 +30,7 @@ const StatisticsCard = ({
         <p className=" text-xs">24 horas: {last24Hours} jogos</p>
         <p className=" text-xs">7 dias: {lastWeek} jogos</p>
         <p className=" text-xs">30 dias: {lastMonth} jogos</p>
+        <p className=" text-xs">Média: {Math.floor(lastMonth / 30)} jogos por dia</p>
       </div>
       <div className="flex flex-col items-center gap-2">
         <div className="flex flex-col items-center">
@@ -45,19 +46,18 @@ const StatisticsCard = ({
         </div>
       </div>
       <div className="flex flex-col items-center gap-2">
-        <div className="relative overflow-hidden h-[80px] w-[80px] rounded-full flex items-center justify-center bg-defeat-red">
+        <div className="relative overflow-hidden h-[120px] w-[120px] rounded-full flex items-center justify-center bg-defeat-red">
           <div
-            className="absolute h-[80px] w-[80px] bg-victory-blue"
+            className="absolute h-[120px] w-[120px] bg-victory-blue"
             style={{
               transform: `translateY(${100 - winRate}%)`,
             }}
           ></div>
-          <div className="absolute h-[76px] w-[76px] rounded-full bg-foreground"></div>
-          <div className="text-lg font-bold z-10">{winRate}%</div>
+          <div className="absolute h-[112px] w-[112px] rounded-full bg-foreground"></div>
+          <div className="font-bold z-10">{winRate.toFixed(2)}%</div>
         </div>
         <p className="text-sm">Win Rate</p>
       </div>
-
     </div>
   );
 };
