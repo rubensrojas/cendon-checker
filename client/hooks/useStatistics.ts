@@ -25,7 +25,7 @@ const useStatistics = () => {
   }) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${backendUrl}/api/statistics`, {
+      const response = await fetch(`${backendUrl}/api/statistics/overview`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

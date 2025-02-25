@@ -1,9 +1,11 @@
 require('dotenv').config();
 
 import { db } from '../../db/connection';
-import { Match, MatchPlayer, Player } from '../../interfaces/db';
+import { Match, MatchPlayer } from '../../interfaces/db';
 import { MatchData, MatchInfo } from '../../interfaces/matches';
 import { Request, Response } from 'express';
+import { getPlayer } from '../db/players';
+import { addMatches } from '../db/matches';
 
 const apiKey = process.env.RIOT_API_KEY;
 
@@ -102,25 +104,15 @@ const fetchMatchDetails = async (matchIds: string[]) => {
   return matchDetails;
 };
 
-const getPlayerId = async (name: string, tag: string) => {
-  const player = db
-    .prepare('SELECT * FROM players WHERE name = ? AND tag = ?')
-    .get(name, tag) as Player;
-
-  if (!player) {
-    throw new Error('Player not found');
-  }
-
-  return player.id;
-};
-
 const getLastedMatches = async (
   playerId: number,
   count: number = 20,
   start: number = 0
 ) => {
   const playerMatches = db
-    .prepare('SELECT * FROM match_players where player_id = ? LIMIT ? OFFSET ?')
+    .prepare(
+      'SELECT * FROM match_players where player_id = ? ORDER BY game_start_timestamp DESC LIMIT ? OFFSET ?'
+    )
     .all(playerId, count, start) as MatchPlayer[];
 
   const matchesDetails: { matchId: string; data: MatchInfo }[] = [];
@@ -155,7 +147,7 @@ const getRecentMatches = async (
   }
 
   try {
-    const playerId = await getPlayerId(name, tag);
+    const { id: playerId } = await getPlayer(name, tag);
 
     const matches = await getLastedMatches(playerId, count, start);
 
@@ -164,9 +156,77 @@ const getRecentMatches = async (
       message: 'Success',
     });
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .json({ error: 'Failed to fetch matches', message: err.message });
+  }
+};
+
+const filterExistingMatches = (matches: string[]) => {
+  const checkMatch = db.prepare(
+    'SELECT match_id FROM matches WHERE match_id = ?'
+  );
+
+  const newMatches: string[] = [];
+
+  for (const match of matches) {
+    const existingMatch = checkMatch.get(match);
+    if (!existingMatch) {
+      newMatches.push(match);
+    }
+  }
+
+  console.log(newMatches);
+
+  return newMatches;
+};
+
+const refreshMatches = async (req: Request, res: Response) => {
+  const name = req?.body?.name;
+  const tag = req?.body?.tag;
+  const count = isNaN(Number(req?.body?.count)) ? 10 : Number(req?.body?.count);
+  const start = isNaN(Number(req?.body?.start)) ? 0 : Number(req?.body?.start);
+
+  if (!name || !tag) {
+    res.status(400).json({ error: 'Name and Tag are required' });
+    return;
+  }
+
+  try {
+    const playerPUUID = await fetchPlayerPUUID(name, tag);
+
+    const matches = await fetchMatches(playerPUUID, {
+      count,
+      start,
+    });
+
+    const newMatchesIds = filterExistingMatches(matches);
+
+    if (newMatchesIds.length === 0) {
+      res.json({
+        matches: [],
+        message: 'No new matches found',
+      });
+      return;
+    }
+
+    const matchesDetails = await fetchMatchDetails(newMatchesIds);
+
+    const player = await getPlayer(name, tag);
+    await addMatches(matchesDetails, player);
+
+    const newMatches = await getLastedMatches(player.id, newMatchesIds.length);
+
+    res.json({
+      matches: newMatches,
+      message: 'Success',
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ error: 'Failed to fetch player ID', message: err.message });
   }
 };
 
@@ -176,5 +236,5 @@ export {
   fetchMatches,
   fetchMatchDetails,
   fetchMatchDetail,
-  getPlayerId
+  refreshMatches,
 };

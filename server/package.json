@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf dist/ && tsc && cp -r data dist/data && cp db/data.json dist/db/data.json",
+    "build": "tsc && cp -r data dist/data && cp db/data.json dist/db/data.json",
     "dev": "nodemon src/app.ts",
     "start": "node dist/src/app.js",
     "scrap": "ts-node dist/scripts/scrapMatches.ts",

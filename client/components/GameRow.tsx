@@ -14,6 +14,7 @@ export default function GameRow({
   damage,
   gold,
   gameLength,
+  gameMode,
 }: FormattedMatch) {
   const gameLengthData = {
     minutes: Math.floor(gameLength / 60),
@@ -31,6 +32,7 @@ export default function GameRow({
     >
       <div className="flex flex-row items-center gap-6">
         <div className="flex flex-col items-center gap-1">
+          <p className="text-sm font-bold">{gameMode}</p>
           <div className="w-[100px] h-[100px] bg-gray-800 rounded-md">
             <Image
               src={`/images/champions-icons/${champion}.png`}

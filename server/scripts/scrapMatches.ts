@@ -22,7 +22,6 @@ const scrapMatches = async (
   for (let i = 0; i < cycles; i++) {
     console.log(`Scraping cycle ${i + 1} of ${cycles}`);
     const matchIds = await fetchMatches(playerPUUId, {
-      type: 'ranked',
       start: currentMatchCount + initialStart,
       count: totalCount > 100 ? 100 : totalCount,
     });

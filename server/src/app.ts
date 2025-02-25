@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { getRecentMatches } from './controllers/MatchesController';
+import { getRecentMatches, refreshMatches } from './controllers/MatchesController';
 import { getStatistics } from './controllers/StatisticsController';
 
 require('dotenv').config();
@@ -11,11 +11,15 @@ const port = 8000;
 app.use(cors());  // Enable CORS for all origins
 app.use(express.json());
 
-app.post('/api/recent-matches', async (req, res) => {
+app.post('/api/matches/recent', async (req, res) => {
   getRecentMatches(req, res);
 });
 
-app.post('/api/statistics', async (req, res) => {
+app.post('/api/matches/refresh', async (req, res) => {
+  refreshMatches(req, res);
+});
+
+app.post('/api/statistics/overview', async (req, res) => {
   getStatistics(req, res);
 });
 

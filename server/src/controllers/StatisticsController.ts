@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../../db/connection';
-import { getPlayerId } from './MatchesController';
+import { getPlayer } from '../db/players';
 import { MatchPlayer } from '../../interfaces/db';
 
 const getLastMatches = async (
@@ -13,7 +13,7 @@ const getLastMatches = async (
       'SELECT * FROM match_players WHERE player_id = ? ORDER BY game_start_timestamp DESC LIMIT ? OFFSET ?'
     )
     .all(playerId, count, start) as MatchPlayer[];
-      
+
   return matches;
 };
 
@@ -32,18 +32,18 @@ const formatMatchesByDate = (matches: MatchPlayer[]) => {
   const oneMonthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   return {
-    last24Hours: matches.filter(match => {
+    last24Hours: matches.filter((match) => {
       const matchDate = new Date(match.game_start_timestamp);
       return matchDate >= new Date(today.getTime() - 24 * 60 * 60 * 1000);
     }),
-    lastWeek: matches.filter(match => {
+    lastWeek: matches.filter((match) => {
       const matchDate = new Date(match.game_start_timestamp);
       return matchDate >= oneWeekAgo;
     }),
-    lastMonth: matches.filter(match => {
+    lastMonth: matches.filter((match) => {
       const matchDate = new Date(match.game_start_timestamp);
       return matchDate >= oneMonthAgo;
-    })
+    }),
   };
 };
 
@@ -68,7 +68,7 @@ const getStatistics = async (
   }
 
   try {
-    const playerId = await getPlayerId(name, tag);
+    const { id: playerId } = await getPlayer(name, tag);
 
     const lastMatches = await getLastMatches(playerId);
     const matchesByDate = formatMatchesByDate(lastMatches);

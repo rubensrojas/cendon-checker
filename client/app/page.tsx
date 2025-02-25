@@ -7,7 +7,15 @@ import StatisticsCard from '@/components/StatisticsCard';
 import useStatistics from '@/hooks/useStatistics';
 
 export default function HomePage() {
-  const { isLoading, filteredMatches: games, error } = useMatches();
+  const {
+    isLoading,
+    filteredMatches: games,
+    error,
+    isRefreshing,
+    refreshMatches,
+    isLoadingMore,
+    fetchMatches,
+  } = useMatches();
   const {
     isLoading: isLoadingStatistics,
     winRate,
@@ -43,12 +51,26 @@ export default function HomePage() {
           mostPlayedChampion={mostPlayedChampion}
           isLoading={isLoadingStatistics}
         />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:opacity-80 disabled:cursor-not-allowed"
+          onClick={refreshMatches}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
         <h6 className="text-xl text-center font-bold">
           Últimos {games.length} jogos ranqueados
         </h6>
         {games.map((game) => (
           <GameRow key={game.id} {...game} />
         ))}
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:opacity-80 disabled:cursor-not-allowed"
+          onClick={() => fetchMatches(20, games.length, true)}
+          disabled={isLoadingMore}
+        >
+          {isLoadingMore ? 'Loading more...' : 'Load more'}
+        </button>
       </div>
     </main>
   );

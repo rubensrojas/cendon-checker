@@ -240,4 +240,5 @@ export type FormattedMatch = {
   damage: number;
   gold: number;
   gameLength: number;
+  gameMode: string;
 };
