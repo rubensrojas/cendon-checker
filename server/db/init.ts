@@ -18,7 +18,8 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS matches (
         match_id TEXT PRIMARY KEY,
         game_start_timestamp INTEGER NOT NULL,
-        data TEXT NOT NULL
+        data TEXT NOT NULL,
+        UNIQUE(match_id)
     )
 `);
 
@@ -29,6 +30,7 @@ db.exec(`
         game_start_timestamp INTEGER NOT NULL,
         player_id INTEGER NOT NULL,
         champion STRING NOT NULL,
+        win INTEGER NOT NULL,
         PRIMARY KEY (match_id, player_id),
         FOREIGN KEY (match_id) REFERENCES Matches(match_id) ON DELETE CASCADE,
         FOREIGN KEY (player_id) REFERENCES Players(id) ON DELETE CASCADE

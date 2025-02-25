@@ -2,10 +2,13 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "es6", 
     "moduleResolution": "node",
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "resolveJsonModule": true
   },
+  "include": ["src/**/*", "scripts/**/*", "db/**/*", "interfaces/**/*"],
+  "exclude": ["node_modules"],
   "lib": ["es2015"]
 }

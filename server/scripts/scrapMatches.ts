@@ -38,7 +38,9 @@ const scrapMatches = async (
         }
 
         console.log(
-          `Fetching match ${matchId} - ${currentMatchCount + 1} of ${totalCount}`
+          `Fetching match ${matchId} - ${
+            currentMatchCount + 1
+          } of ${totalCount}`
         );
 
         const matchDetail = await fetchMatchDetail(matchId);
@@ -62,7 +64,7 @@ const scrapMatches = async (
   console.log(`Scraping finished`);
 };
 
-const populateMatches = (matches: MatchData[], player: Player) => {
+export const populateMatches = (matches: MatchData[], player: Player) => {
   const checkMatch = db.prepare(
     'SELECT match_id FROM matches WHERE match_id = ?'
   );
@@ -71,7 +73,7 @@ const populateMatches = (matches: MatchData[], player: Player) => {
     'INSERT INTO matches (match_id, data, game_start_timestamp) VALUES (?, ?, ?)'
   );
   const insertMatchPlayers = db.prepare(
-    'INSERT INTO match_players (match_id, game_start_timestamp, player_id, champion) VALUES (?, ?, ?, ?)'
+    'INSERT INTO match_players (match_id, game_start_timestamp, player_id, champion, win) VALUES (?, ?, ?, ?, ?)'
   );
 
   let newMatchCount = 0;
@@ -85,19 +87,22 @@ const populateMatches = (matches: MatchData[], player: Player) => {
           participant.riotIdTagline === player.tag
       );
 
-      const championName = participantInfo.championName;
-      insert.run(
-        match.metadata.matchId,
-        JSON.stringify(match.info),
-        match.info.gameStartTimestamp
-      );
-      insertMatchPlayers.run(
-        match.metadata.matchId,
-        match.info.gameStartTimestamp,
-        player.id,
-        championName
-      );
-      newMatchCount++;
+      if (participantInfo) {
+        const championName = participantInfo.championName;
+        insert.run(
+          match.metadata.matchId,
+          JSON.stringify(match.info),
+          match.info.gameStartTimestamp
+        );
+        insertMatchPlayers.run(
+          match.metadata.matchId,
+          match.info.gameStartTimestamp,
+          player.id,
+          championName,
+          participantInfo.win ? 1 : 0
+        );
+        newMatchCount++;
+      }
     }
   }
 
@@ -144,29 +149,15 @@ const args = argv.slice(2);
 if (args.length === 0) {
   console.log('Please provide arguments');
   exit(1);
-}
+} else {
+  const playerName = args[0];
+  const playerTag = args[1];
+  const initialStart = args[2] ? parseInt(args[2]) : 0;
+  const totalCount = args[3] ? parseInt(args[3]) : 100;
 
-const playerName = args[0];
-const playerTag = args[1];
-const initialStart = args[2] ? parseInt(args[2]) : 0;
-const totalCount = args[3] ? parseInt(args[3]) : 100;
+  console.log(
+    `Player name: ${playerName} \nPlayer tag: ${playerTag} \nInitial start: ${initialStart} \nTotal count: ${totalCount}`
+  );
 
-console.log(
-  `Player name: ${playerName} \nPlayer tag: ${playerTag} \nInitial start: ${initialStart} \nTotal count: ${totalCount}`
-);
-
-const readline = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-readline.question('Do you want to continue? (y/n) ', (answer) => {
-  if (answer.toLowerCase() !== 'y') {
-    console.log('Operation cancelled');
-    readline.close();
-    exit(0);
-  }
   scrapMatches(playerName, playerTag, initialStart, totalCount);
-
-  readline.close();
-});
+}

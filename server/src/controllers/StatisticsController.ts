@@ -5,7 +5,7 @@ import { MatchPlayer } from '../../interfaces/db';
 
 const getLastMatches = async (
   playerId: number,
-  count: number = 100,
+  count: number = 500,
   start: number = 0
 ) => {
   const matches = db
@@ -47,6 +47,12 @@ const formatMatchesByDate = (matches: MatchPlayer[]) => {
   };
 };
 
+const calculateWinRate = (matches: MatchPlayer[]) => {
+  const wins = matches.filter((match) => match.win).length;
+  const losses = matches.filter((match) => !match.win).length;
+  return (wins / (wins + losses)) * 100;
+};
+
 const getStatistics = async (
   req: Request & {
     body: { name?: string; tag?: string };
@@ -68,6 +74,8 @@ const getStatistics = async (
     const matchesByDate = formatMatchesByDate(lastMatches);
     const mostPlayedChampion = await getMostPlayedChampion(playerId);
 
+    const winRate = calculateWinRate(lastMatches);
+
     res.status(200).json({
       gamesCount: {
         last24Hours: matchesByDate.last24Hours.length,
@@ -75,6 +83,7 @@ const getStatistics = async (
         lastMonth: matchesByDate.lastMonth.length,
       },
       mostPlayedChampion,
+      winRate,
     });
   } catch (err) {
     res

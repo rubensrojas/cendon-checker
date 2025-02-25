@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist/ && tsc && cp -r data dist/data && cp db/data.json dist/db/data.json",
     "dev": "nodemon src/app.ts",
     "start": "node dist/src/app.js",
-    "scrap": "ts-node scripts/scrapMatches.ts"
+    "scrap": "ts-node dist/scripts/scrapMatches.ts",
+    "init-db": "node dist/db/init.js && node dist/db/populate.js",
+    "populate-db": "node dist/scripts/populateDBfromDataJSON.js 'ah n é o melzin' BCT69",
+    "deploy": "npm run build && npm run init-db && npm run populate-db && npm run start"
   },
   "keywords": [],
   "author": "",

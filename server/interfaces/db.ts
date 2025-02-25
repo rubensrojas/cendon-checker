@@ -15,4 +15,5 @@ export interface MatchPlayer {
   player_id: number;
   champion: string;
   game_start_timestamp: number;
+  win: number;
 }
