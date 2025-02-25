@@ -9,7 +9,7 @@
     "scrap": "ts-node dist/scripts/scrapMatches.ts",
     "init-db": "node dist/db/init.js && node dist/db/populate.js",
     "populate-db": "node dist/scripts/populateDBfromDataJSON.js 'ah n é o melzin' BCT69",
-    "deploy": "npm run build && npm run init-db && npm run populate-db && npm run start"
+    "deploy": "npm run build && npm run init-db && npm run populate-db"
   },
   "keywords": [],
   "author": "",
